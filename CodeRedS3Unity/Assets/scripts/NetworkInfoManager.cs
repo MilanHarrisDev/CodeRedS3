@@ -51,6 +51,8 @@ public class NetworkInfoManager : MonoBehaviour {
     [SerializeField]
     private Text t_upDown;
 
+    private Graph currentGraph = null;
+
     private void Start()
     {
         Instance = this;
@@ -117,6 +119,9 @@ public class NetworkInfoManager : MonoBehaviour {
         netInfo.SetDownSpeed(downSpeed);
 
         t_upDown.text = netInfo.GetUpDown();
+
+        if(currentGraph != null)
+            currentGraph.UpdateGraph(downSpeed, upSpeed);
     }
 
     public NetworkInfo GetNetworkInfo(string id){
@@ -125,5 +130,18 @@ public class NetworkInfoManager : MonoBehaviour {
                 return netInfo;
 
         return null;
+    }
+
+    public void SetCurrentGraph(Graph graph){
+        currentGraph = graph;
+    }
+
+    public bool GraphExists()
+    {
+        return currentGraph != null;
+    }
+
+    public GameObject GetCurrentGraphGO(){
+        return currentGraph.gameObject;
     }
 }

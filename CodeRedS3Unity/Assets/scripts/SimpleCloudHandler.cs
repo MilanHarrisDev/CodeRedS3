@@ -11,6 +11,10 @@ public class SimpleCloudHandler : MonoBehaviour, ICloudRecoEventHandler {
     public static SimpleCloudHandler Instance;
 
     private CloudRecoBehaviour mCloudRecoBehaviour;
+
+    [SerializeField]
+    private GameObject imageTargetTemplate, graphTemplate;
+
     private bool mIsScanning = false;
     private string mTargetMetadata = "";
 
@@ -24,6 +28,8 @@ public class SimpleCloudHandler : MonoBehaviour, ICloudRecoEventHandler {
     private Text t_metadata, t_scanStatus;
     [SerializeField]
     private Button b_restartScan;
+
+    private GameObject currentImageTarget;
 
     private void Start()
     {
@@ -58,10 +64,23 @@ public class SimpleCloudHandler : MonoBehaviour, ICloudRecoEventHandler {
         {
             NetworkInfoManager.Instance.AddNetworkDevice(mTargetMetadata);
             currentId = mTargetMetadata;
-        }
 
-		// stop the target finder (i.e. stop scanning the cloud)
-        mCloudRecoBehaviour.CloudRecoEnabled = false;
+            GameObject newImageTarget = Instantiate(imageTargetTemplate) as GameObject;
+            newImageTarget.name = "imageTarget_" + currentId;
+            newImageTarget.SetActive(true);
+            GameObject newGraph = Instantiate(graphTemplate, newImageTarget.transform.position + (newImageTarget.transform.up * .3f), newImageTarget.transform.rotation, newImageTarget.transform);
+            newGraph.GetComponent<Graph>().Init(currentId);
+            newGraph.transform.localScale = newImageTarget.transform.localScale;
+			
+            currentImageTarget = newImageTarget;
+            NetworkInfoManager.Instance.SetCurrentGraph(newGraph.GetComponent<Graph>());
+
+            var tracker = TrackerManager.Instance.GetTracker<ObjectTracker>();
+            ImageTargetBehaviour imageTargetBehaviour = tracker.TargetFinder.EnableTracking(targetSearchResult, newImageTarget);
+			
+            if (imageTargetBehaviour != null)
+                mCloudRecoBehaviour.CloudRecoEnabled = false;
+        }
     }
 
     public void OnStateChanged(bool scanning)
@@ -70,6 +89,11 @@ public class SimpleCloudHandler : MonoBehaviour, ICloudRecoEventHandler {
         if (scanning)
         {
             // clear all known trackables
+            if (NetworkInfoManager.Instance.GraphExists()){
+                Destroy(NetworkInfoManager.Instance.GetCurrentGraphGO());
+                NetworkInfoManager.Instance.SetCurrentGraph(null);
+            }
+
             var tracker = TrackerManager.Instance.GetTracker<ObjectTracker>();
             tracker.TargetFinder.ClearTrackables(false);
         }

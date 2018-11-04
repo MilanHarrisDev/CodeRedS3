@@ -115,5 +115,7 @@ public class SimpleCloudHandler : MonoBehaviour, ICloudRecoEventHandler {
 
     public void RestartScan(){
         mCloudRecoBehaviour.CloudRecoEnabled = true;
+        mTargetMetadata = "";
+        currentId = "";
     }
 }
